@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"os"
 
 	audit "github.com/Dolg0ff/todoapp-audit-log/pkg/domain"
 
@@ -19,7 +20,7 @@ func NewAudit(db *mongo.Database) *Audit {
 }
 
 func (r *Audit) Insert(ctx context.Context, item audit.LogItem) error {
-	_, err := r.db.Collection("logs").InsertOne(ctx, item)
+	_, err := r.db.Collection(os.Getenv("DB_COLLECTION")).InsertOne(ctx, item)
 
 	return err
 }

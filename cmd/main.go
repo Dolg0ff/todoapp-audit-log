@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/Dolg0ff/todoapp-audit-log/internal/config"
@@ -23,16 +24,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	opts := options.Client()
-	opts.SetAuth(options.Credential{
-		Username: cfg.DB.Username,
-		Password: cfg.DB.Password,
-	})
-	opts.ApplyURI(cfg.DB.URI)
+	uri := fmt.Sprintf("mongodb://%s:%s@%s/%s", cfg.DB.Username, cfg.DB.Password, cfg.DB.URI, cfg.DB.Username)
+	opts := options.Client().ApplyURI(uri)
 
 	dbClient, err := mongo.Connect(ctx, opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Mongo connect: %s", err)
 	}
 
 	if err := dbClient.Ping(context.Background(), nil); err != nil {
@@ -40,6 +37,7 @@ func main() {
 	}
 
 	db := dbClient.Database(cfg.DB.Database)
+	db.Collection(os.Getenv("DB_COLLECTION"))
 
 	auditRepo := repository.NewAudit(db)
 	auditService := service.NewAudit(auditRepo)
